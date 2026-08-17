@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Farmacia | Inventario y Reportes</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="./public/styles.css" />
+    <link rel="icon" href="public/assets/icon.png" type="image/png">
+  </head>
+  <body>
+    <div class="app-shell">
+      <main>
+        <section class="panel panel-hero">
+          <div class="hero-layout">
+            <div class="hero-text">
+              <div class="tag">Sistema de compras farmacéuticas</div>
+              <h1>Reporte de compra de medicamentos</h1>
+              <p>
+                Carga el histórico de consumo y el inventario actual para generar un reporte claro con promedio mensual,
+                stock disponible, sugerencia de compra y exportación a Excel.
+              </p>
+            </div>
+
+            <div class="metric-grid">
+              <article class="metric-card">
+                <p>Histórico</p>
+                <strong id="historyCount">0 filas</strong>
+              </article>
+              <article class="metric-card">
+                <p>Inventario</p>
+                <strong id="inventoryCount">0 productos</strong>
+              </article>
+              <article class="metric-card">
+                <p>Precios oficiales</p>
+                <strong id="priceListCount">0 productos</strong>
+              </article>
+              <article class="metric-card">
+                <p>Resultado</p>
+                <strong id="resultCount">0 compras</strong>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="workspace-grid">
+          <aside class="panel panel-side">
+            <header class="panel-head">
+              <h2>Entradas</h2>
+              <p>Usa histórico e inventario para generar el reporte. La lista de precios oficiales es opcional y mejora el costo usado en el cálculo. La app acepta .xlsx y .xls.</p>
+            </header>
+
+            <div class="form-stack">
+              <label>
+                <span>Archivo histórico</span>
+                <input id="historyFile" type="file" accept=".xlsx,.xls" />
+              </label>
+
+              <label>
+                <span>Archivo de inventario</span>
+                <input id="inventoryFile" type="file" accept=".xlsx,.xls" />
+              </label>
+
+              <label>
+                <span>Lista de precios oficiales (opcional)</span>
+                <input id="priceListFile" type="file" accept=".xlsx,.xls" />
+              </label>
+
+              <div class="two-col-fields">
+                <label>
+                  <span>Mes del reporte</span>
+                  <input id="reportMonth" type="month" />
+                </label>
+
+                <label class="clear-field-wrap">
+                  <span>&nbsp;</span>
+                  <button id="clearBtn" type="button" class="clear-btn">Limpiar</button>
+                </label>
+              </div>
+
+              <div class="actions-row">
+                <button id="generateBtn" type="button">Generar reporte</button>
+                <button id="downloadBtn" type="button" disabled>Descargar Excel</button>
+              </div>
+
+              <div id="statusBox">Esperando archivos para comenzar.</div>
+            </div>
+          </aside>
+
+          <section class="panel panel-main">
+            <header class="panel-head result-head">
+              <div>
+                <h2>Resultados</h2>
+                <p>El reporte se calcula con el promedio mensual de consumo de los últimos 3 meses disponibles antes del mes seleccionado.</p>
+              </div>
+
+              <div class="metric-grid metric-grid-small">
+                <article class="metric-card">
+                  <p>Unidades a comprar</p>
+                  <strong id="unitsToBuy">0</strong>
+                </article>
+                <article class="metric-card">
+                  <p>Valor estimado</p>
+                  <strong id="estimatedValue">$0</strong>
+                </article>
+                <article class="metric-card">
+                  <p>Meses usados</p>
+                  <strong id="monthsUsed">0</strong>
+                </article>
+                <article class="metric-card">
+                  <p>Ahorro / Sobrecosto</p>
+                  <strong id="savingsValue">$0</strong>
+                </article>
+              </div>
+            </header>
+
+            <div class="table-wrap scrollbar-thin">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Referencia</th>
+                    <th>Descripción</th>
+                    <th>Promedio</th>
+                    <th>Stock</th>
+                    <th>A comprar</th>
+                    <th>Costo usado</th>
+                    <th>Proveedor sugerido</th>
+                    <th>Origen precio</th>
+                    <th>Valor estimado</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="resultsBody">
+                  <tr>
+                    <td colspan="10">Sin datos todavía.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <section class="coverage-card">
+              <h3>Cobertura</h3>
+              <p id="coverageText">Carga los archivos para conocer cuántas referencias quedaron sin cruce entre histórico e inventario.</p>
+            </section>
+
+            <section class="coverage-card" id="priceCoverageCard" style="display:none;">
+              <h3>Cobertura de precios oficiales</h3>
+              <p id="priceCoverageText"></p>
+            </section>
+          </section>
+        </section>
+
+        <footer class="app-footer">
+          <small>&copy; <span id="currentYear"></span> JPHS Development Solutions. Todos los derechos reservados.</small>
+        </footer>
+      </main>
+    </div>
+
+    <script src="./public/app.js"></script>
+  </body>
+</html>
