@@ -236,7 +236,8 @@ input:focus {
 
 input[type="month"]::-webkit-calendar-picker-indicator {
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   width: 18px;
   height: 18px;
   margin: 0 1px 0 8px;
