@@ -72,9 +72,12 @@
                   <input id="reportMonth" type="month" />
                 </label>
 
-                <label class="clear-field-wrap">
-                  <span>&nbsp;</span>
-                  <button id="clearBtn" type="button" class="clear-btn">Limpiar</button>
+                <label>
+                  <span>Periodo de consumo</span>
+                  <div id="periodMonths" class="period-picker" role="group" aria-label="Periodo de consumo">
+                    <button type="button" class="period-option is-active" data-period-months="3" aria-pressed="true">3 meses</button>
+                    <button type="button" class="period-option" data-period-months="1" aria-pressed="false">1 mes</button>
+                  </div>
                 </label>
               </div>
 
@@ -82,6 +85,8 @@
                 <button id="generateBtn" type="button">Generar reporte</button>
                 <button id="downloadBtn" type="button" disabled>Descargar Excel</button>
               </div>
+
+              <button id="clearBtn" type="button" class="clear-btn">Limpiar campos</button>
 
               <div id="statusBox">Esperando archivos para comenzar.</div>
             </div>
@@ -91,7 +96,7 @@
             <header class="panel-head result-head">
               <div>
                 <h2>Resultados</h2>
-                <p>El reporte se calcula con el promedio mensual de consumo de los últimos 3 meses disponibles antes del mes seleccionado.</p>
+                <p>El reporte usa el promedio mensual de consumo del periodo elegido, tomando los meses disponibles antes del mes seleccionado.</p>
               </div>
 
               <div class="metric-grid metric-grid-small">

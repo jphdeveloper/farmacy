@@ -14,6 +14,8 @@ const elements = {
   inventoryFile: document.querySelector('#inventoryFile'),
   priceListFile: document.querySelector('#priceListFile'),
   reportMonth: document.querySelector('#reportMonth'),
+  periodMonths: document.querySelector('#periodMonths'),
+  periodOptions: [...document.querySelectorAll('[data-period-months]')],
   clearBtn: document.querySelector('#clearBtn'),
   generateBtn: document.querySelector('#generateBtn'),
   downloadBtn: document.querySelector('#downloadBtn'),
@@ -88,6 +90,17 @@ elements.generateBtn.addEventListener('click', async () => {
   await generateReport();
 });
 
+elements.periodOptions.forEach((option) => {
+  option.addEventListener('click', async () => {
+    elements.periodOptions.forEach((item) => {
+      const isActive = item === option;
+      item.classList.toggle('is-active', isActive);
+      item.setAttribute('aria-pressed', String(isActive));
+    });
+    await autoGenerateIfReady();
+  });
+});
+
 elements.clearBtn?.addEventListener('click', () => {
   clearAllFields();
 });
@@ -111,7 +124,8 @@ async function generateReport() {
   }
 
   const reportMonth = parseMonthValue(elements.reportMonth.value || getCurrentMonthValue());
-  const monthsToUse = appState.historyData.months.filter((month) => month < reportMonth).slice(-3);
+  const monthsRequested = getSelectedPeriodMonths();
+  const monthsToUse = appState.historyData.months.filter((month) => month < reportMonth).slice(-monthsRequested);
 
   if (!monthsToUse.length) {
     setStatus('No hay meses históricos anteriores al mes seleccionado. Cambia el mes del reporte o revisa los datos.');
@@ -167,7 +181,7 @@ async function generateReport() {
 
   renderReport(sortedRows, monthsToUse.length, appState.historyData, appState.inventoryData, priceCoverage);
   elements.downloadBtn.disabled = false;
-  setStatus(`Reporte generado para ${formatMonth(reportMonth)} con ${monthsToUse.length} meses de histórico.`);
+  setStatus(`Reporte generado para ${formatMonth(reportMonth)} con ${monthsToUse.length} mes${monthsToUse.length === 1 ? '' : 'es'} de histórico.`);
 }
 
 function summarizePriceCoverage(allRows, priceListData) {
@@ -493,7 +507,7 @@ async function parseHistoryWorkbook(file) {
 
   for (let index = headerIndex + 1; index < rows.length; index += 1) {
     const row = rows[index];
-    const reference = cleanText(row[indexMap.reference]);
+    const reference = normalizeReference(row[indexMap.reference]);
     if (!reference) continue;
 
     const date = parseExcelDate(row[indexMap.date]);
@@ -533,7 +547,7 @@ async function parseInventoryWorkbook(file) {
 
   for (let index = headerIndex + 1; index < rows.length; index += 1) {
     const row = rows[index];
-    const reference = cleanText(row[indexMap.reference]);
+    const reference = normalizeReference(row[indexMap.reference]);
     const description = cleanText(row[indexMap.description]);
     if (!reference) continue;
 
@@ -720,22 +734,22 @@ function aggregateHistoricalConsumption(rows, monthsUsed) {
 }
 
 function createIndexMap(headers) {
-  const find = (...candidates) => headers.findIndex((header) => candidates.includes(header));
+  const find = (...candidates) => headers.findIndex((header) => candidates.some((candidate) => header === candidate || header.includes(candidate)));
   return {
     date: find('fecha'),
     reference: find('referencia', 'codigoreferencia', 'codigo'),
-    description: find('descripcion', 'descripción'),
+    description: find('descripcion'),
     exits: find('salidas', 'salida')
   };
 }
 
 function createInventoryIndexMap(headers) {
-  const find = (...candidates) => headers.findIndex((header) => candidates.includes(header));
+  const find = (...candidates) => headers.findIndex((header) => candidates.some((candidate) => header === candidate || header.includes(candidate)));
   return {
-    reference: find('referencia'),
-    description: find('descripcion', 'descripción'),
-    stock: find('stock'),
-    cost: find('costo')
+    reference: find('referencia', 'codigo'),
+    description: find('descripcion'),
+    stock: find('stock', 'existencia'),
+    cost: find('costo', 'precio')
   };
 }
 
@@ -782,6 +796,14 @@ function cleanText(value) {
   return String(value ?? '').trim();
 }
 
+function normalizeReference(value) {
+  return cleanText(value)
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9]/g, '');
+}
+
 function normalizeKey(value) {
   return cleanText(value)
     .toLowerCase()
@@ -793,7 +815,23 @@ function normalizeKey(value) {
 function toNumber(value) {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
   if (typeof value === 'string') {
-    const cleaned = value.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, '');
+    const raw = value.trim().replace(/[^0-9,.-]/g, '');
+    const lastComma = raw.lastIndexOf(',');
+    const lastDot = raw.lastIndexOf('.');
+    let cleaned = raw;
+
+    if (lastComma >= 0 && lastDot >= 0) {
+      const decimalSeparator = lastComma > lastDot ? ',' : '.';
+      const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
+      cleaned = raw.replaceAll(thousandsSeparator, '').replace(decimalSeparator, '.');
+    } else if (lastComma >= 0) {
+      const decimals = raw.length - lastComma - 1;
+      cleaned = decimals === 3 ? raw.replaceAll(',', '') : raw.replace(',', '.');
+    } else if (lastDot >= 0) {
+      const decimals = raw.length - lastDot - 1;
+      cleaned = decimals === 3 ? raw.replaceAll('.', '') : raw;
+    }
+
     const parsed = Number(cleaned);
     return Number.isFinite(parsed) ? parsed : 0;
   }
@@ -840,6 +878,11 @@ function clearAllFields() {
   elements.inventoryFile.value = '';
   elements.priceListFile.value = '';
   elements.reportMonth.value = getCurrentMonthValue();
+  elements.periodOptions.forEach((option, index) => {
+    const isDefault = index === 0;
+    option.classList.toggle('is-active', isDefault);
+    option.setAttribute('aria-pressed', String(isDefault));
+  });
 
   elements.historyCount.textContent = '0 filas';
   elements.inventoryCount.textContent = '0 productos';
@@ -855,4 +898,9 @@ function clearAllFields() {
   elements.resultsBody.innerHTML = '<tr><td colspan="10">Sin datos todavía.</td></tr>';
   elements.downloadBtn.disabled = true;
   setStatus('Campos limpiados. Puedes cargar nuevos archivos.');
+}
+
+function getSelectedPeriodMonths() {
+  const selectedOption = elements.periodOptions.find((option) => option.classList.contains('is-active'));
+  return Number(selectedOption?.dataset.periodMonths || 3);
 }
