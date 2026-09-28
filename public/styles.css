@@ -210,11 +210,20 @@ input[type="file"] {
 }
 
 input[type="month"] {
+  display: block;
+  max-width: 100%;
   padding-right: 44px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%239fb0c9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='17' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E"), linear-gradient(180deg, rgba(3, 8, 20, 0.9), rgba(10, 18, 38, 0.75));
   background-position: right 12px center, 0 0;
   background-repeat: no-repeat;
   background-size: 18px 18px, 100% 100%;
+}
+
+.month-input-wrap {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 input[type="file"]::file-selector-button {
@@ -695,6 +704,7 @@ tbody td[colspan] {
   }
 
   input[type="month"] {
+    max-width: 100%;
     padding: 10px 44px 10px 10px;
     font-size: 16px;
   }
