@@ -40,6 +40,15 @@ if (elements.currentYear) {
   elements.currentYear.textContent = String(new Date().getFullYear());
 }
 
+elements.reportMonth.addEventListener('click', () => {
+  if (typeof elements.reportMonth.showPicker !== 'function') return;
+  try {
+    elements.reportMonth.showPicker();
+  } catch {
+    elements.reportMonth.focus();
+  }
+});
+
 elements.historyFile.addEventListener('change', async () => {
   const file = elements.historyFile.files?.[0];
   if (!file) return;
